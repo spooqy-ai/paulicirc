@@ -17,8 +17,3 @@ LayeredCircuit
 .. autoclass:: paulicirc.layers.LayeredCircuit
     :show-inheritance:
     :members:
-
-PAULI_CHARS
------------
-
-.. autodata:: paulicirc.layers.PAULI_CHARS

@@ -29,16 +29,6 @@ CommutationCodeArray
 
 .. autodata:: paulicirc.circuits.CommutationCodeArray
 
-PHASE_NBYTES
-------------
-
-.. autodata:: paulicirc.circuits.PHASE_NBYTES
-
-TYPE_CHECKING
--------------
-
-.. autodata:: paulicirc.circuits.TYPE_CHECKING
-
 commute_circuit
 ---------------
 

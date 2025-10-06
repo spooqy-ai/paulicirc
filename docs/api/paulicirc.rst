@@ -12,4 +12,5 @@ The following members were explicitly reexported using ``__all__``:
     - :py:class:`paulicirc.builders.CircuitBuilder`
     - :py:class:`paulicirc.gadgets.Gadget`
     - :py:class:`paulicirc.layers.Layer`
+    - :py:class:`paulicirc.layers.LayeredCircuit`
     - :py:obj:`paulicirc.utils.options.options`

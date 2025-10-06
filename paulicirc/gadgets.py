@@ -133,6 +133,7 @@ QubitIdxs: TypeAlias = Sequence[QubitIdx] | UIntArray1D
 
 def broadcast_idxs(*idxs_seq: QubitIdx | QubitIdxs) -> tuple[QubitIdxs, ...]:
     """
+    Low-level function.
     Broadcasts any number of sequences of qubit indexes to a common length,
     defined as the least common multiple of lengths for index sequences.
     Individual qubit indexes passed to this function are considered the same
@@ -161,18 +162,19 @@ Type alias for values which can be used to specify a phase:
 
 
 def gadget_data_len(num_qubits: int) -> int:
-    """Returns the length of gadget data."""
+    """Low-level function. Low-level function. Returns the length of gadget data."""
     return -(-num_qubits // 4) + PHASE_NBYTES
 
 
 def zero_gadget_data(num_qubits: int) -> GadgetData:
-    """Returns blank data for a gadget with the given number of qubits."""
+    """Low-level function. Returns blank data for a gadget with the given number of qubits."""
     return np.zeros(-(-num_qubits // 4) + PHASE_NBYTES, dtype=np.uint8)
 
 
 @numba_jit
 def get_gadget_legs(g: GadgetData) -> PauliArray:
     """
+    Low-level function.
     Extract an array of leg information from given gadget data.
     The returned array has values in ``range(4)``,
     where the encoding is explained in :obj:`GadgetData`.
@@ -189,6 +191,7 @@ def get_gadget_legs(g: GadgetData) -> PauliArray:
 
 def set_gadget_legs(g: GadgetData, legs: PauliArray) -> None:
     """
+    Low-level function.
     Sets leg information in the given gadget data.
     The input array should have values in ``range(4)``,
     where the encoding is explained in :obj:`GadgetData`.
@@ -204,13 +207,13 @@ def set_gadget_legs(g: GadgetData, legs: PauliArray) -> None:
 
 @numba_jit
 def get_gadget_leg_at(g: GadgetData, q: int | np.unsignedinteger[Any]) -> Pauli:
-    """Extracts single leg data from the given gadget data."""
+    """Low-level function. Extracts single leg data from the given gadget data."""
     return (g[q // 4] >> 2 * (3 - q % 4)) & 0b11  # type: ignore
 
 
 @numba_jit
 def get_gadget_legs_at(g: GadgetData, q: UIntArray1D) -> PauliArray:
-    """Extracts multiple leg data from the given gadget data."""
+    """Low-level function. Extracts multiple leg data from the given gadget data."""
     return (g[q // 4] >> 2 * (3 - q % 4)) & 0b11  # type: ignore
 
 
@@ -218,7 +221,7 @@ def get_gadget_legs_at(g: GadgetData, q: UIntArray1D) -> PauliArray:
 def set_gadget_leg_at(
     g: GadgetData, p: int | np.unsignedinteger[Any], q: int | np.unsignedinteger[Any]
 ) -> None:
-    """Sets single leg data from the given gadget data."""
+    """Low-level function. Sets single leg data from the given gadget data."""
     _q = np.uint64(q)
     shift = 2 * (3 - _q % 4)
     g[_q // 4] &= 0b11111111 ^ (0b11 << shift)
@@ -227,32 +230,33 @@ def set_gadget_leg_at(
 
 @numba_jit
 def set_gadget_legs_at(g: GadgetData, ps: PauliArray, qs: UIntArray1D) -> None:
+    """Low-level function. Sets multiple leg data from the given gadget data."""
     for p, q in zip(ps, qs):
         set_gadget_leg_at(g, p, q)
 
 
 @numba_jit
 def get_phase(g: GadgetData) -> Phase:
-    """Extracts phase data from the given gadget data."""
+    """Low-level function. Extracts phase data from the given gadget data."""
     return float(g[-PHASE_NBYTES:].view(np.float64)[0])
 
 
 @numba_jit
 def set_phase(g: GadgetData, phase: Phase) -> None:
-    """Sets phase data in the given gadget data."""
+    """Low-level function. Sets phase data in the given gadget data."""
     g[-PHASE_NBYTES:] = np.array([phase % (2 * np.pi)], dtype=np.float64).view(np.uint8)
 
 
 @numba_jit
 def is_zero_phase(phase: Phase) -> bool:
-    """Whether the given phase is deemed to be zero."""
+    """Low-level function. Whether the given phase is deemed to be zero."""
     atol = 1e-8
     phase %= 2 * np.pi
     return bool(phase < atol or 2 * np.pi - phase < atol)
 
 
 def are_same_phase(lhs: Phase, rhs: Phase) -> bool:
-    """Whether the given phases are deemed to be the same."""
+    """Low-level function. Whether the given phases are deemed to be the same."""
     from .utils.options import options
 
     lhs %= 2 * np.pi
@@ -261,7 +265,7 @@ def are_same_phase(lhs: Phase, rhs: Phase) -> bool:
 
 
 def are_same_phases(lhs: PhaseArray, rhs: PhaseArray) -> bool:
-    """Whether the given phase arrays are deemed to be the same."""
+    """Low-level function. Whether the given phase arrays are deemed to be the same."""
     from .utils.options import options
 
     lhs %= 2 * np.pi
@@ -271,7 +275,7 @@ def are_same_phases(lhs: PhaseArray, rhs: PhaseArray) -> bool:
 
 @numba_jit
 def gadget_overlap(p: GadgetData, q: GadgetData) -> int:
-    """Gadget overlap."""
+    """Low-level function. Gadget overlap."""
     p = p[:-PHASE_NBYTES]
     q = q[:-PHASE_NBYTES]
     parity = np.zeros(len(p), dtype=np.uint8)
@@ -286,19 +290,19 @@ def gadget_overlap(p: GadgetData, q: GadgetData) -> int:
 
 @numba_jit
 def decode_phases(phase_data: PhaseDataArray) -> PhaseArray:
-    """Decodes phase data from a gadget circuit into an array of phases."""
+    """Low-level function. Decodes phase data from a gadget circuit into an array of phases."""
     return phase_data.flatten().view(PHASE_DTYPE)
 
 
 @numba_jit
 def encode_phases(phases: PhaseArray) -> PhaseDataArray:
-    """Encodes an array of phases into phase data for a gadget circuit."""
+    """Low-level function. Encodes an array of phases into phase data for a gadget circuit."""
     return phases.view(np.uint8).reshape(-1, PHASE_NBYTES)
 
 
 @numba_jit
 def invert_phases(phase_data: PhaseDataArray) -> None:
-    """Inplace phase inversion for the given phase data."""
+    """Low-level function. Inplace phase inversion for the given phase data."""
     phase_data[:] = encode_phases(-decode_phases(phase_data))
 
 
@@ -324,9 +328,9 @@ GadgetDataTriple: TypeAlias = UInt8Array1D
 @numba_jit
 def pauli_product_phase(g: GadgetData, h: GadgetData) -> int:
     """
-    Auxiliary function which computes the phase acquired by a product of two
-    paulistrings. Returns an integer :math:`e` modulo 4, such that the phase
-    is :math:`i^{e}`.
+    Low-level function.
+    Computes the phase acquired by a product of two paulistrings.
+    Returns an integer :math:`e` modulo 4, such that the phase is :math:`i^{e}`.
     """
     g_legs = get_gadget_legs(g).astype(np.int8)
     h_legs = get_gadget_legs(h).astype(np.int8)
@@ -338,7 +342,8 @@ def pauli_product_phase(g: GadgetData, h: GadgetData) -> int:
 @numba_jit
 def commute_gadget_pair(row: GadgetDataTriple) -> None:
     """
-    Auxiliary function used by :func:`Gadget.commute_past` to commute a pair of gadgets.
+    Low-level function.
+    Used by :func:`Gadget.commute_past` to commute a pair of gadgets.
     It operates on a single array, containing the linearised data for the two gadgets
     to be commuted, as well as auxiliary space for a third gadget.
     It expects data for the third gadget to be set to zero, except for the desired
@@ -677,14 +682,14 @@ class Gadget:
 
         If ``code=0``, the gadgets are not commuted:
 
-        ..code-block:: python
+        .. code-block:: python
 
             p.commute_past(q, 0) # -> (p, q, None)
 
         If the gadgets have even overlap, commutation always swaps them, regardless of
         the commutation code:
 
-        ..code-block:: python
+        .. code-block:: python
 
             # p.overlap(q) % 2 == 0
             p.commute_past(q, code) # -> (q, p, None)
@@ -692,7 +697,7 @@ class Gadget:
         If the gadgets have odd overlap, commutation codes 1-7 correspond to the six
         possible ways to commute them, each resulting in a gadget triple:
 
-        ..code-block:: python
+        .. code-block:: python
 
             # p.overlap(q) % 2 != 0
             # code in range(1, 8)

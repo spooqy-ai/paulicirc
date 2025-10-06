@@ -1,3 +1,5 @@
+"""Option manager for the :mod:`paulicirc` library."""
+
 from __future__ import annotations
 from typing import Final
 

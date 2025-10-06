@@ -26,7 +26,7 @@ Pauli Gadgets
 -------------
 
 A Pauli gadget (cf. `arXiv:1906.01734 <https://arxiv.org/abs/1906.01734>`_) is a unitary quantum gate performing a many-qubit rotation about a Pauli axis by a given angle, with rotations about the X, Y and Z axes of the Bloch sphere as the single-qubit cases.
-Pauli gadgets are also known as Pauli exponentials, or Pauli evolution gates (cf. `qiskit.circuit.library.PauliEvolutionGate <https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.circuit.library.PauliEvolutionGate>`_).
+Pauli gadgets are also known as Pauli exponentials, or Pauli evolution gates (cf. `PauliEvolutionGate <https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.circuit.library.PauliEvolutionGate>`_).
 
 Pauli gadgets are the basic ingredient of quantum circuits in the PauliCirc library, and the :class:`~paulicirc.gadgets.Gadget` class provides an interface to create, access and manipulate individual gadget data.
 
@@ -46,7 +46,7 @@ A random gadget — one where the rotation axis and angle are independently and 
 >>> Gadget.random(10)
 <Gadget: Z_Z_ZXXX_Y, ~17π/16>
 
-Optionally, an integer seed or a Numpy `random generator <https://numpy.org/doc/stable/reference/random/generator.html>` can be passed as the ``rng`` argument, for reproducibility:
+Optionally, an integer seed or a Numpy `random generator <https://numpy.org/doc/stable/reference/random/generator.html>`_ can be passed as the ``rng`` argument, for reproducibility:
 
 >>> Gadget.random(10, rng=0)
 <Gadget: XZYYYY_Z_Y, ~21π/256>
@@ -212,7 +212,7 @@ If the ``~`` character is not present, the phase displayed is equal — up to th
 >>> Gadget.from_paulistr("Z__XY_", 3*pi/4)
 <Gadget: Z__XY_, 3π/4>
 
-The display precision can be altered — temporarily or permanently — via the ``display_prec`` option from :obj:`paulicirc.options <paulicirc.utils.options>`:
+The display precision can be altered — temporarily or permanently — via the :attr:`display_prec <paulicirc.utils.options.PauliCircOptions.display_prec>` option from :obj:`paulicirc.options <paulicirc.utils.options>`:
 
 >>> import paulicirc
 >>> g = Gadget.random(10, rng=0)
@@ -248,7 +248,7 @@ Note that the precision used by equality comparison is usually much higher than 
 0.25744424357926954
 
 The precise logic used for phase comparison is implemented by the :func:`are_same_phase <paulicirc.gadgets.are_same_phase>` function.
-See documentation for the `optmanage <https://optmanage.readthedocs.io/en/latest/>` package for specific usage details on the PauliCirc option manager.
+See documentation for the `optmanage <https://optmanage.readthedocs.io/en/latest/>`_ package for specific usage details on the PauliCirc option manager.
 
 
 Pauli Circuits
@@ -267,12 +267,12 @@ A "zero circuit" — one where all gadgets are zero gadgets — can be construct
 >>> Circuit.zero(20, 10)
 <Circuit: 20 gadgets, 10 qubits>
 
-A random circuit — one with independently sampled random gadgets — can be constructed via the `Circuit.random <paulicirc.circuits.Circuit.random>` class method, passing the desired number of gadgets and qubits:
+A random circuit — one with independently sampled random gadgets — can be constructed via the :meth:`Circuit.random <paulicirc.circuits.Circuit.random>` class method, passing the desired number of gadgets and qubits:
 
 >>> Circuit.random(20, 10)
 <Circuit: 20 gadgets, 10 qubits>
 
-Optionally, an integer seed or a Numpy `random generator <https://numpy.org/doc/stable/reference/random/generator.html>` can be passed as the ``rng`` argument, for reproducibility:
+Optionally, an integer seed or a Numpy `random generator <https://numpy.org/doc/stable/reference/random/generator.html>`_ can be passed as the ``rng`` argument, for reproducibility:
 
 >>> Circuit.random(20, 10, rng=0)
 <Circuit: 20 gadgets, 10 qubits>

@@ -41,7 +41,15 @@
             "CommutationCodeArray"
         ]
     },
-    "exclude_members": {},
+    "exclude_members": {
+        "paulicirc.circuits": [
+            "PHASE_NBYTES",
+            "TYPE_CHECKING"
+        ],
+        "paulicirc.layers": [
+            "PAULI_CHARS"
+        ]
+    },
     "include_modules": [],
     "exclude_modules": [],
     "member_fullnames": {},

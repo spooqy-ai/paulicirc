@@ -87,6 +87,7 @@ and associated commutation code conventions.
 
 def zero_circ(m: int, n: int) -> CircuitData:
     """
+    Low-level function.
     Returns a circuit with ``m`` gadgets on ``n`` qubits,
     where all gadgets have no legs and zero phase.
 
@@ -98,6 +99,7 @@ def zero_circ(m: int, n: int) -> CircuitData:
 
 def rand_circ(m: int, n: int, *, rng: RNG) -> CircuitData:
     """
+    Low-level function.
     Returns a uniformly random circuit with ``m`` gadgets on ``n`` qubits.
     """
     ncols = PHASE_NBYTES - (-n // 4)
@@ -115,6 +117,7 @@ def rand_circ(m: int, n: int, *, rng: RNG) -> CircuitData:
 @numba_jit
 def get_circuit_legs(circ: CircuitData) -> PauliArray2D:
     """
+    Low-level function.
     Extract a 2D array of leg information from given circuit data.
     The returned array has values in ``range(4)``,
     where the encoding is explained in :obj:`~paulicirc.gadgets.GadgetData`.
@@ -131,6 +134,7 @@ def get_circuit_legs(circ: CircuitData) -> PauliArray2D:
 
 def set_circuit_legs(circ: CircuitData, legs: PauliArray2D) -> None:
     """
+    Low-level function.
     Sets leg information in the given circuit data.
     The input array should have values in ``range(4)``,
     where the encoding is explained in :obj:`~paulicirc.gadgets.GadgetData`.
@@ -149,6 +153,7 @@ def transversal_set_gadget_leg_at(
     circ: CircuitData, p: int, qs: UIntArray1D, start: int, end: int
 ) -> None:
     """
+    Low-level function.
     Sets single leg data to the given circuit data, transversally over multiple
     gadget indices and qubits.
     """
@@ -163,7 +168,10 @@ def transversal_set_gadget_leg_at(
 def transversal_set_phase(
     circ: CircuitData, phase: Phase, start: int, end: int
 ) -> None:
-    """Sets phase data, transversally over multiple gadget indices."""
+    """
+    Low-level function.
+    Sets phase data, transversally over multiple gadget indices.
+    """
     circ[start:end, -PHASE_NBYTES:] = np.array(
         [phase % (2 * np.pi)], dtype=np.float64
     ).view(np.uint8)
@@ -171,6 +179,7 @@ def transversal_set_phase(
 
 def commute_circuit(circ: CircuitData, codes: CommutationCodeArray) -> CircuitData:
     """
+    Low-level function.
     Commutes subsequent gadget pairs in the circuit according to the given codes.
     Expects the number of codes to be ``m//2``, where ``m`` is the number of gadgets.
 
@@ -194,7 +203,10 @@ def unitary_from_gadgets(
     canonical_phase: bool = True,
     _use_cupy: bool = False,  # currently in alpha
 ) -> Complex128Array2D:
-    """Returns the unitary matrix associated to the given sequence of gadgets."""
+    """
+    Low-level function.
+    Returns the unitary matrix associated to the given sequence of gadgets.
+    """
     res: Complex128Array2D = np.eye(2**num_qubits, dtype=np.complex128)
     if _use_cupy:
         import cupy as cp  # type: ignore[import-untyped]
@@ -219,6 +231,7 @@ def statevec_from_gadgets(
     _use_cupy: bool = False,  # currently in alpha
 ) -> Complex128Array1D:
     """
+    Low-level function.
     Computes the statevector resulting from the application of the given gadgets
     to the given input statevector.
     """
@@ -451,7 +464,7 @@ class Circuit:
 
     @property
     def is_zero(self) -> bool:
-        """Whether the circuit is all zero (legs set to '_', phases set to 0)."""
+        """Whether the circuit is all zero (legs set to ``_``, phases set to 0)."""
         return not np.any(self._data)
 
     @property
