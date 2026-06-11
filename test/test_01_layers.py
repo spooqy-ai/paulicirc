@@ -4,11 +4,11 @@ import pytest
 
 from paulicirc.gadgets import (
     Gadget,
-    Layer,
     PauliArray,
     Phase,
     is_zero_phase,
 )
+from paulicirc.layers import Layer
 
 RNG_SEED = 0
 RNG_ALT_SEED = 1
