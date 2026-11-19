@@ -195,7 +195,7 @@ Codes 1-7 correspond to six possible ways to commute the gadgets past each other
 >>> g.commute_past(h, 7)
 (<Gadget: XX, ~π/4>, <Gadget: _Z, ~0π>, <Gadget: XY, π/2>)
 
-For technical details, see the documentation of the :meth:`Gadget.commute_past <paulicirc.gadgets.Gadget.commute_past>` method and the `euler <https://github.com/neverlocal/euler>`_ package.
+For technical details, see the documentation of the :meth:`Gadget.commute_past <paulicirc.gadgets.Gadget.commute_past>` method.
 
 Approximation
 ^^^^^^^^^^^^^

@@ -29,7 +29,6 @@ from typing import (
     final,
     overload,
 )
-import euler
 import numpy as np
 from scipy.linalg import expm  # type: ignore[import-untyped]
 
@@ -306,14 +305,6 @@ def invert_phases(phase_data: PhaseDataArray) -> None:
     phase_data[:] = encode_phases(-decode_phases(phase_data))
 
 
-_convert_0xz_yzx = numba_jit(euler.convert_zxz_yzx)
-_convert_0xz_zyx = numba_jit(euler.convert_zxz_zyx)
-_convert_0xz_zxy = numba_jit(euler.convert_zxz_zxy)
-_convert_0xz_yzy = numba_jit(euler.convert_zxz_yzy)
-_convert_0xz_yxy = numba_jit(euler.convert_zxz_yxy)
-_convert_0xz_zyz = numba_jit(euler.convert_zxz_zyz)
-_convert_0xz_xyx = numba_jit(euler.convert_zxz_xyx)
-
 CommutationCode: TypeAlias = int
 """
 A number 0-7 describing how two Pauli gadgets are to be commuted past each other.
@@ -339,6 +330,103 @@ def pauli_product_phase(g: GadgetData, h: GadgetData) -> int:
     )
 
 
+_GIMBAL_LOCK_TOL: Final[float] = 1e-14
+"""
+Threshold on the sine or cosine of half the middle angle, below which a
+re-decomposition into three rotations is treated as being at gimbal lock.
+"""
+
+
+@numba_jit
+def _wrap_phase(phase: float) -> float:
+    """Low-level function. Wraps a phase to the interval from -pi to pi."""
+    return float(phase - 2 * np.pi * np.round(phase / (2 * np.pi)))
+
+
+@numba_jit
+def _proper_euler_angles(
+    w: float, xa: float, xb: float, xc: float, s: float, negate_middle: bool
+) -> tuple[float, float, float]:
+    """
+    Low-level function.
+    Angles of rotations about axes A, B, A (in order of application) whose
+    product is the rotation with quaternion components ``w`` (scalar), ``xa``,
+    ``xb`` and ``xc`` along A, B and the third axis C, where AB = i*s*C.
+
+    The middle angle is in the interval from 0 to pi, or from -pi to 0 if
+    ``negate_middle`` is set. At gimbal lock, the first angle is set to zero.
+    All quantities are computed from sines and cosines of half-angles through
+    arctangents, so that no precision is lost near gimbal lock.
+    """
+    m_sin = np.hypot(xb, xc)
+    m_cos = np.hypot(w, xa)
+    if m_sin < _GIMBAL_LOCK_TOL:
+        return 0.0, 0.0, 2 * np.arctan2(xa, w)
+    if m_cos < _GIMBAL_LOCK_TOL:
+        return 0.0, np.pi, 2 * np.arctan2(s * xc, xb)
+    half_sum = np.arctan2(xa, w)
+    half_diff = np.arctan2(s * xc, xb)
+    middle = 2 * np.arctan2(m_sin, m_cos)
+    if negate_middle:
+        return half_sum - half_diff + np.pi, -middle, half_sum + half_diff + np.pi
+    return half_sum - half_diff, middle, half_sum + half_diff
+
+
+@numba_jit
+def _commuted_phases(
+    a: float, b: float, flip_y: int, i1: int, i2: int, i3: int
+) -> tuple[float, float, float]:
+    """
+    Low-level function.
+    Phases of three gadgets, in order of application, which are equivalent to a
+    gadget with legs ``p`` and phase ``a`` followed by an anticommuting gadget
+    with legs ``q`` and phase ``b``.
+    The legs of the three gadgets are selected by ``i1``, ``i2`` and ``i3``,
+    where 0 stands for ``p``, 1 for ``q`` and 2 for ``r = p ^ q``.
+    Either the three selections are distinct, or the first and third coincide.
+
+    The gadgets are represented as rotations about the X axis for ``p``, the Z
+    axis for ``q``, and the Y axis for ``r``, with orientation of the latter
+    fixed by ``flip_y``, as derived from :func:`pauli_product_phase`.
+    """
+    axes = (0, 2, 1)
+    signs = (1.0, 1.0, 1.0 if flip_y else -1.0)
+    ca, sa = np.cos(a / 2), np.sin(a / 2)
+    cb, sb = np.cos(b / 2), np.sin(b / 2)
+    u = np.array([cb * ca, cb * sa, sb * sa, sb * ca])
+    ax_a, ax_b = axes[i1], axes[i2]
+    s = 1.0 if (ax_b - ax_a) % 3 == 1 else -1.0
+    if i1 == i3:
+        ax_c = 3 - ax_a - ax_b
+        alpha, beta, gamma = _proper_euler_angles(
+            u[0], u[1 + ax_a], u[1 + ax_b], u[1 + ax_c], s, i2 == 2
+        )
+        return (
+            _wrap_phase(signs[i1] * alpha),
+            _wrap_phase(signs[i2] * beta),
+            _wrap_phase(signs[i1] * gamma),
+        )
+    ax_c = axes[i3]
+    h = np.zeros(4)
+    h[0] = h[1 + ax_b] = np.sqrt(0.5)
+    v = np.array(
+        [
+            u[0] * h[0] - u[1] * h[1] - u[2] * h[2] - u[3] * h[3],
+            u[0] * h[1] + h[0] * u[1] + u[2] * h[3] - u[3] * h[2],
+            u[0] * h[2] + h[0] * u[2] + u[3] * h[1] - u[1] * h[3],
+            u[0] * h[3] + h[0] * u[3] + u[1] * h[2] - u[2] * h[1],
+        ]
+    )
+    alpha, beta, gamma = _proper_euler_angles(
+        v[0], v[1 + ax_c], v[1 + ax_b], v[1 + ax_a], -s, False
+    )
+    return (
+        _wrap_phase(signs[i1] * s * alpha),
+        _wrap_phase(signs[i2] * (beta - np.pi / 2)),
+        _wrap_phase(signs[i3] * gamma),
+    )
+
+
 @numba_jit
 def commute_gadget_pair(row: GadgetDataTriple) -> None:
     """
@@ -350,7 +438,6 @@ def commute_gadget_pair(row: GadgetDataTriple) -> None:
     commutation code (cf. :obj:`CommutationCode`) which should be written on the
     last byte.
     """
-    TOL = 1e-8
     n = len(row) // 3
     xi = row[-1]
     p: GadgetData = row[:n].copy()
@@ -366,77 +453,24 @@ def commute_gadget_pair(row: GadgetDataTriple) -> None:
         return
     r = p ^ q  # phase bytes will be overwritten later
     flip_y = ((pauli_product_phase(p, q) + 1) // 2) % 2
-    if xi < 3:
-        if xi == 1:
-            # 0xz -> xyx
-            # 0qp -> qrq
-            row[:n] = q
-            row[n : 2 * n] = r
-            row[2 * n :] = q
-            _a, _b, _c = _convert_0xz_xyx(0, b, a, TOL)
-            if flip_y:
-                _b = -_b
-        else:  # xi == 2
-            # 0xz -> yxy
-            # 0qp -> rqr
-            row[:n] = r
-            row[n : 2 * n] = q
-            row[2 * n :] = r
-            _a, _b, _c = _convert_0xz_yxy(0, b, a, TOL)
-            if flip_y:
-                _a = -_a
-                _c = -_c
-    elif xi < 5:
-        if xi == 3:
-            # 0xz -> zyz
-            # 0qp -> prp
-            row[:n] = p
-            row[n : 2 * n] = r
-            row[2 * n :] = p
-            _a, _b, _c = _convert_0xz_zyz(0, b, a, TOL)
-            if flip_y:
-                _b = -_b
-        else:  # xi == 4
-            # 0xz -> yzy
-            # 0qp -> rpr
-            row[:n] = r
-            row[n : 2 * n] = p
-            row[2 * n :] = r
-            _a, _b, _c = _convert_0xz_yzy(0, b, a, TOL)
-            if flip_y:
-                _a = -_a
-                _c = -_c
-    else:
-        if xi == 5:
-            # 0xz -> yzx
-            # 0qp -> rpq
-            row[:n] = q
-            row[n : 2 * n] = p
-            row[2 * n :] = r
-            _a, _b, _c = _convert_0xz_yzx(0, b, a, TOL)
-            if flip_y:
-                _a = -_a
-        elif xi == 6:
-            # 0xz -> zyx
-            # 0qp -> prq
-            row[:n] = q
-            row[n : 2 * n] = r
-            row[2 * n :] = p
-            _a, _b, _c = _convert_0xz_zyx(0, b, a, TOL)
-            if flip_y:
-                _b = -_b
-        else:  # xi == 7
-            # 0xz -> zxy
-            # 0qp -> pqr
-            row[:n] = r
-            row[n : 2 * n] = q
-            row[2 * n :] = p
-            _a, _b, _c = _convert_0xz_zxy(0, b, a, TOL)
-            if flip_y:
-                _c = -_c
-    set_phase(row[:n], _c)
-    set_phase(row[n : 2 * n], _b)
-    set_phase(row[2 * n :], _a)
+    if xi == 1:
+        i1, i2, i3 = 1, 2, 1  # qrq
+    elif xi == 2:
+        i1, i2, i3 = 2, 1, 2  # rqr
+    elif xi == 3:
+        i1, i2, i3 = 0, 2, 0  # prp
+    elif xi == 4:
+        i1, i2, i3 = 2, 0, 2  # rpr
+    elif xi == 5:
+        i1, i2, i3 = 1, 0, 2  # qpr
+    elif xi == 6:
+        i1, i2, i3 = 1, 2, 0  # qrp
+    else:  # xi == 7
+        i1, i2, i3 = 2, 1, 0  # rqp
+    phases = _commuted_phases(a, b, flip_y, i1, i2, i3)
+    for k, i in enumerate((i1, i2, i3)):
+        row[k * n : (k + 1) * n] = p if i == 0 else (q if i == 1 else r)
+        set_phase(row[k * n : (k + 1) * n], phases[k])
 
 
 @final

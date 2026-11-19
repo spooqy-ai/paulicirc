@@ -373,3 +373,48 @@ def test_gadget_commute_past(
     canonicalize_phase(u)
     canonicalize_phase(v)
     assert np.allclose(u, v)
+
+
+SPECIAL_PHASES = [
+    0.0,
+    1e-12,
+    1e-9,
+    1e-6,
+    4e-5,
+    1e-3,
+    np.pi / 2,
+    np.pi / 2 + 1e-7,
+    np.pi - 1e-6,
+    np.pi,
+    3 * np.pi / 2,
+    2 * np.pi - 1e-7,
+]
+
+
+@pytest.mark.parametrize(
+    "num_qubits,commutation_code,seed",
+    [
+        (num_qubits, code, seed)
+        for num_qubits in range(1, 4)
+        for code in range(1, 8)
+        for seed in rng.integers(0, 65536, size=NUM_RNG_SAMPLES)
+    ],
+)
+def test_gadget_commute_past_special_phases(
+    num_qubits: int,
+    commutation_code: int,
+    seed: int,
+) -> None:
+    g = Gadget.random(num_qubits, rng=seed)
+    h = Gadget.random(num_qubits, rng=seed + 1)
+    for g_phase in SPECIAL_PHASES:
+        for h_phase in (h.phase, *SPECIAL_PHASES):
+            g.phase, h.phase = g_phase, h_phase
+            u = h.unitary() @ g.unitary()
+            p, q, r = g.commute_past(h, commutation_code)
+            if r is None:
+                v = q.unitary() @ p.unitary()
+            else:
+                v = r.unitary() @ q.unitary() @ p.unitary()
+            overlap = np.vdot(u, v)
+            assert np.allclose(u * (overlap / abs(overlap)), v, rtol=0, atol=1e-12)
