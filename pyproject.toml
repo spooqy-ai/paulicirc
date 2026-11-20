@@ -1,6 +1,6 @@
 [project]
 name = "paulicirc"
-version = "0.2.0"
+version = "0.2.1"
 authors = [{ name = "NeverLocal" }]
 description = "A library for quantum circuits based on Pauli gadgets."
 readme = "README.rst"
@@ -28,8 +28,8 @@ classifiers = [
 
 [project.urls]
 Documentation = "https://paulicirc.readthedocs.io"
-Repository = "https://github.com/neverlocal/paulicirc"
-Issues = "https://github.com/neverlocal/paulicirc/issues"
+Repository = "https://github.com/spooqy-ai/paulicirc"
+Issues = "https://github.com/spooqy-ai/paulicirc/issues"
 
 [build-system]
 requires = ["hatchling == 1.26.3"]
