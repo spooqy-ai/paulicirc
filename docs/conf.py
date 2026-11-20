@@ -25,8 +25,8 @@ import sphinx_rtd_theme  # type: ignore
 # -- Project information -----------------------------------------------------
 
 project = "paulicirc"
-copyright = "2025, NeverLocal"
-author = "NeverLocal"
+copyright = "2025, Spooqy"
+author = "Spooqy"
 
 
 # The version info for the project you"re documenting, acts as replacement for

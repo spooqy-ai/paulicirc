@@ -1,7 +1,7 @@
 [project]
 name = "paulicirc"
 version = "0.2.1"
-authors = [{ name = "NeverLocal" }]
+authors = [{ name = "Spooqy" }]
 description = "A library for quantum circuits based on Pauli gadgets."
 readme = "README.rst"
 requires-python = ">=3.10"

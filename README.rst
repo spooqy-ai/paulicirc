@@ -54,5 +54,5 @@ For the full API documentation, see https://paulicirc.readthedocs.io/
 License
 =======
 
-`LGPLv3 © NeverLocal. <LICENSE>`_
+`LGPLv3 © Spooqy. <LICENSE>`_
 

@@ -4,7 +4,7 @@ PauliCirc
 
 A library for the creation of circuits of Pauli gadgets.
 
-GitHub repo: https://github.com/neverlocal/paulicirc
+GitHub repo: https://github.com/spooqy-ai/paulicirc
 
 
 .. toctree::
